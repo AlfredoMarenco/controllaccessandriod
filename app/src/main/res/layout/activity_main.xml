@@ -19,6 +19,7 @@
         android:inputType="textPersonName"
         android:text=""
         android:textColor="#FFFFFF"
+        android:textIsSelectable="true"
         app:layout_constraintEnd_toEndOf="@id/bgLayout"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@id/bgLayout"
