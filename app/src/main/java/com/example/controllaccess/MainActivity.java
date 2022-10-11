@@ -1,13 +1,16 @@
 package com.example.controllaccess;
 
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -18,11 +21,15 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
+
 public class MainActivity extends AppCompatActivity {
 
     EditText textCode;
     Button buttonSend;
     TextView textBarcode;
+    RelativeLayout bgLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         textCode = findViewById(R.id.textCode);
         buttonSend = findViewById(R.id.buttonSend);
         textBarcode = findViewById(R.id.textBarcode);
+        bgLayout = findViewById(R.id.bgLayout);
 
         buttonSend.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -48,16 +56,23 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(String response) {
                 try {
+                    final Handler handler = new Handler();
+
                     JSONObject jsonObject = new JSONObject(response);
-                    textBarcode.setText(jsonObject.getString("barcode"));
+                    Integer status = jsonObject.getInt("status");
+                    if (status == 1){
+                        bgLayout.setBackgroundResource(R.color.green);
+                    }else{
+                        bgLayout.setBackgroundResource(R.color.red);
+                    }
                 } catch (JSONException e) {
-                    e.printStackTrace();
+                    textBarcode.setText("Codigo no valid");
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("error",error.getMessage());
+                textBarcode.setText("Codigo no valid");
             }
         });
 
