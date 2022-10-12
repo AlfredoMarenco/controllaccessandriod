@@ -3,7 +3,9 @@ package com.example.controllaccess;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
@@ -21,6 +23,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.Key;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -44,6 +47,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 showCode(textCode.getText().toString());
+            }
+        });
+
+        textCode.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                if (keyCode == 66){
+                    showCode(textCode.getText().toString());
+                    return true;
+                }
+                return false;
             }
         });
 
