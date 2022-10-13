@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
     <RelativeLayout
         android:id="@+id/bgLayout"
         android:layout_width="match_parent"
@@ -34,7 +35,8 @@
         app:layout_constraintEnd_toEndOf="@id/bgLayout"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="@id/bgLayout"
-        app:layout_constraintTop_toTopOf="@id/bgLayout" />
+        app:layout_constraintTop_toTopOf="@id/bgLayout"
+        tools:ignore="SpeakableTextPresentCheck" />
 
     <Button
         android:id="@+id/buttonSend"
@@ -53,17 +55,18 @@
 
     <TextView
         android:id="@+id/textBarcode"
-        android:layout_width="58dp"
-        android:layout_height="19dp"
-        android:layout_marginStart="176dp"
-        android:layout_marginLeft="176dp"
-        android:layout_marginTop="76dp"
-        android:layout_marginEnd="177dp"
-        android:layout_marginRight="177dp"
-        android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="410dp"
+        android:layout_height="538dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:text=""
+        android:textSize="60sp"
+        app:layout_constraintEnd_toEndOf="@id/bgLayout"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/bgLayout"
         app:layout_constraintTop_toBottomOf="@+id/buttonSend" />
 
 
