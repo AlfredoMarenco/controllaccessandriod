@@ -2,7 +2,9 @@ package com.example.controllaccess.database;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -42,5 +44,23 @@ public class DataBaseCodes extends DataBaseHelper{
 
 
         return id;
+    }
+
+    public boolean selectCode(String code){
+        Cursor query = null;
+        try {
+            DataBaseHelper dataBaseHelper = new DataBaseHelper(context);
+            SQLiteDatabase dataBase = dataBaseHelper.getWritableDatabase();
+            query = dataBase.rawQuery("SELECT barcode FROM "+ DATABASE_TABLE+ " WHERE barcode LIKE '"+code+"'",null);
+
+            if (query.moveToFirst()){
+                return true;
+            }else{
+                return false;
+            }
+        }finally {
+            query.close();
+        }
+
     }
 }
