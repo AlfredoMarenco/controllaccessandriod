@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity {
     TextView textBarcode;
     RelativeLayout bgLayout;
     MediaPlayer mp;
+    ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         textBarcode = (TextView) findViewById(R.id.textBarcode);
         bgLayout = findViewById(R.id.bgLayout);
         textBarcode.setInputType(InputType.TYPE_NULL);
+        progressBar = findViewById(R.id.progressBar);
         mp = MediaPlayer.create(MainActivity.this,R.raw.ok);
 
         updateDatabase();
@@ -191,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
                 requestQueue.add(codeRequest);
             }
         }).start();
+        progressBar.setVisibility(View.GONE);
     }
 
     private void closeTecladoMovil() {
