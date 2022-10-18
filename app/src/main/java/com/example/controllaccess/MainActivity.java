@@ -124,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateDatabase() {
-        new Thread(new Runnable() {
+        new Handler().post(new Runnable() {
             @Override
             public void run() {
                 DataBaseHelper dataBaseHelper = new DataBaseHelper(MainActivity.this);
@@ -193,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
                 });
                 requestQueue.add(codeRequest);
             }
-        }).start();
+        });
         progressBar.setVisibility(View.GONE);
     }
 
