@@ -42,35 +42,39 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+
 
 public class MainActivity extends AppCompatActivity {
 
     EditText textCode;
     Button buttonSend;
     TextView textBarcode;
+    TextView textInfo;
     RelativeLayout bgLayout;
-    MediaPlayer mp;
+    MediaPlayer ok;
+    MediaPlayer no;
     ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        updateDatabase();
         setContentView(R.layout.activity_main);
-
         textCode = findViewById(R.id.textCode);
-        buttonSend = findViewById(R.id.buttonSend);
+        //buttonSend = findViewById(R.id.buttonSend);
         textBarcode = (TextView) findViewById(R.id.textBarcode);
+        textInfo = (TextView) findViewById(R.id.textInfo);
         bgLayout = findViewById(R.id.bgLayout);
         textBarcode.setInputType(InputType.TYPE_NULL);
         progressBar = findViewById(R.id.progressBar);
-        mp = MediaPlayer.create(MainActivity.this,R.raw.ok);
-
-        updateDatabase();
-
+        ok = MediaPlayer.create(MainActivity.this, R.raw.ok);
+        no = MediaPlayer.create(MainActivity.this, R.raw.no);
 
 
 
-        buttonSend.setOnClickListener(new View.OnClickListener() {
+
+        /*buttonSend.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     new Thread(new Runnable() {
@@ -87,49 +91,111 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }).start();
                 }
-            });
+            });*/
 
+    }
 
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_ENTER:
+                showCode(textCode.getText().toString());
+                textCode.setText("");
+                Log.d("Message", "Validado");
+                closeTecladoMovil();
+                return true;
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                textCode.setOnKeyListener(new View.OnKeyListener() {
-                    @Override
-                    public boolean onKey(View v, int keyCode, KeyEvent event) {
-                        if (keyCode == 66){
-                            new Handler().post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    showCode(textCode.getText().toString());
-                                    textCode.setText("");
-                                    Log.d("Message","Validado");
-                                    closeTecladoMovil();
-                                }
-                            });
-                            new Handler().postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    bgLayout.setBackgroundResource(R.color.white);
-                                    textBarcode.setText("");
-                                }
-                            },2000);
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-            }
-        }).start();
+            default:
+                return false;
+        }
     }
 
     private void updateDatabase() {
-        new Handler().post(new Runnable() {
+
+        DataBaseHelper dataBaseHelper = new DataBaseHelper(MainActivity.this);
+        SQLiteDatabase sqLiteDatabase = dataBaseHelper.getWritableDatabase();
+
+        RequestQueue requestQueue;
+
+        // Instantiate the cache
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024000 * 1024000); // 1MB cap
+
+        // Set up the network to use HttpURLConnection as the HTTP client.
+        Network network = new BasicNetwork(new HurlStack());
+
+        // Instantiate the RequestQueue with the cache and network.
+        requestQueue = new RequestQueue(cache, network);
+
+        // Start the queue
+        requestQueue.start();
+
+        String url = "https://controllaccess.boletea.com/api/code";
+        StringRequest codeRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                try {
+                    JSONArray jsonArray = new JSONArray(response);
+                    Log.d("Conection", "Si me conecte");
+                    //Log.d("Objeto",""+jsonArray);
+                    for (int i = 0; i <= jsonArray.length(); i++) {
+                        DataBaseCodes dataBaseCodes = new DataBaseCodes(MainActivity.this);
+                        if (dataBaseCodes.selectCode(jsonArray.getJSONObject(i).getString("barcode").toString())) {
+                            Log.d("Mensaje de validacion", "Ya esta registrado");
+                        } else {
+                            String barcode = jsonArray.getJSONObject(i).getString("barcode").toString();
+                            String name = jsonArray.getJSONObject(i).getString("name").toString();
+                            String section = jsonArray.getJSONObject(i).getString("section").toString();
+                            String price_category = jsonArray.getJSONObject(i).getString("price_category").toString();
+                            String row = jsonArray.getJSONObject(i).getString("row").toString();
+                            String seat = jsonArray.getJSONObject(i).getString("seat").toString();
+                            String amount = jsonArray.getJSONObject(i).getString("amount").toString();
+                            String order = jsonArray.getJSONObject(i).getString("order").toString();
+                            String sales_channel = jsonArray.getJSONObject(i).getString("sales_channel").toString();
+                            String ext = jsonArray.getJSONObject(i).getString("ext").toString();
+                            String status = jsonArray.getJSONObject(i).getString("status").toString();
+                            String event_id = jsonArray.getJSONObject(i).getString("event_id").toString();
+
+                            long id = dataBaseCodes.insertCode(barcode, name, section, price_category, row, seat, amount, order, sales_channel, ext, status, event_id);
+                            Log.d("Mensaje de registro", "Agregado");
+                            if (id > 0) {
+                                //Toast.makeText(MainActivity.this,"Se cargo la base de datos",Toast.LENGTH_LONG).show();
+                                textBarcode.setText("Se cargo la base de datos");
+                            } else {
+                                textBarcode.setText("No se cargo la base de datos");
+                            }
+                        }
+                        progressBar.setVisibility(View.GONE);
+                    }
+                    Toast.makeText(MainActivity.this, "Todos los codigos Obtenidos", Toast.LENGTH_LONG).show();
+                } catch (JSONException ex) {
+                    Log.d("Error:", ex.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("Conection", error.toString());
+            }
+        });
+        requestQueue.add(codeRequest);
+
+    }
+
+    private void closeTecladoMovil() {
+        View view = this.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    private void showCode(String barcode) {
+        Log.d("Message", "Entre");
+
+        new Thread(new Runnable() {
+
             @Override
             public void run() {
-                DataBaseHelper dataBaseHelper = new DataBaseHelper(MainActivity.this);
-                SQLiteDatabase sqLiteDatabase = dataBaseHelper.getWritableDatabase();
-
                 RequestQueue requestQueue;
 
                 // Instantiate the cache
@@ -144,92 +210,49 @@ public class MainActivity extends AppCompatActivity {
                 // Start the queue
                 requestQueue.start();
 
-                String url = "https://controllaccess.boletea.com/api/code";
-                StringRequest codeRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONArray jsonArray = new JSONArray(response);
-                            Log.d("Conection","Si me conecte");
-                            //Log.d("Objeto",""+jsonArray);
-                            for (int i = 0; i <= jsonArray.length();i++){
-                                DataBaseCodes dataBaseCodes =  new DataBaseCodes(MainActivity.this);
-                                if (dataBaseCodes.selectCode(jsonArray.getJSONObject(i).getString("barcode").toString())){
-                                    Log.d("Mensaje de validacion","Ya esta registrado");
-                                }else{
-                                    String barcode = jsonArray.getJSONObject(i).getString("barcode").toString();
-                                    String name = jsonArray.getJSONObject(i).getString("name").toString();
-                                    String section = jsonArray.getJSONObject(i).getString("section").toString();
-                                    String price_category = jsonArray.getJSONObject(i).getString("price_category").toString();
-                                    String row = jsonArray.getJSONObject(i).getString("row").toString();
-                                    String seat = jsonArray.getJSONObject(i).getString("seat").toString();
-                                    String amount = jsonArray.getJSONObject(i).getString("amount").toString();
-                                    String order = jsonArray.getJSONObject(i).getString("order").toString();
-                                    String sales_channel = jsonArray.getJSONObject(i).getString("sales_channel").toString();
-                                    String ext = jsonArray.getJSONObject(i).getString("ext").toString();
-                                    String status = jsonArray.getJSONObject(i).getString("status").toString();
-                                    String event_id = jsonArray.getJSONObject(i).getString("event_id").toString();
-
-                                    long id = dataBaseCodes.insertCode(barcode,name,section,price_category,row,seat,amount,order,sales_channel,ext,status,event_id);
-                                    Log.d("Mensaje de registro","Agregado");
-                                    if (id > 0){
-                                        //Toast.makeText(MainActivity.this,"Se cargo la base de datos",Toast.LENGTH_LONG).show();
-                                        textBarcode.setText("Se cargo la base de datos");
-                                    }else{
-                                        textBarcode.setText("No se cargo la base de datos");
-                                    }
-                                }
-                            }
-                            Toast.makeText(MainActivity.this,"Todos los codigos Obtenidos",Toast.LENGTH_LONG).show();
-                        }catch (JSONException ex){
-                            Log.d("Error:",ex.toString());
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("Conection",error.toString());
-                    }
-                });
-                requestQueue.add(codeRequest);
-            }
-        });
-        progressBar.setVisibility(View.GONE);
-    }
-
-    private void closeTecladoMovil() {
-        View view = this.getCurrentFocus();
-        if (view != null){
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(),0);
-        }
-    }
-
-    private void showCode(String barcode){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String url = "https://controllaccess.boletea.com/api/code/"+barcode;
+                String url = "https://controllaccess.boletea.com/api/code/" + barcode;
                 StringRequest codeRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         try {
                             JSONObject jsonObject = new JSONObject(response);
                             Integer status = jsonObject.getInt("status");
-                            if (status == 1){
-                                bgLayout.setBackgroundResource(R.color.green);
-                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                textBarcode.setTextSize(60);
-                                textBarcode.setText("PASE");
-                                mp.start();
 
-                            }else if(status == 0){
-                                bgLayout.setBackgroundResource(R.color.red);
-                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                textBarcode.setText("ALTO");
+                            String updated_at = jsonObject.getString("updated_at");
+                            //SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
+                            //String info = dateFormat.format(updated_at);
+
+                            if (jsonObject != null) {
+                                if (status == 1) {
+                                    bgLayout.setBackgroundResource(R.color.green);
+                                    textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                    textBarcode.setTextSize(60);
+                                    textBarcode.setText("PASE");
+                                    ok.start();
+                                    updateCode(barcode);
+                                    new Handler().postDelayed(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            bgLayout.setBackgroundResource(android.R.color.transparent);
+                                            textBarcode.setText("");
+                                        }
+                                    }, 2000);
+
+                                } else if (status == 0) {
+                                    bgLayout.setBackgroundResource(R.color.red);
+                                    textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                    textBarcode.setTextSize(60);
+                                    textBarcode.setText("ALTO");
+                                    no.start();
+                                    textInfo.setText("Escaneado: "+updated_at);
+                                }
                             }
                         } catch (JSONException e) {
-
+                            Log.d("TAG", e.toString());
+                            bgLayout.setBackgroundResource(android.R.color.holo_orange_dark);
+                            textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                            textBarcode.setTextSize(30);
+                            textBarcode.setText("Evento invalido");
                         }
                     }
                 }, new Response.ErrorListener() {
@@ -239,18 +262,47 @@ public class MainActivity extends AppCompatActivity {
 
                     }
                 });
-                Volley.newRequestQueue(MainActivity.this).add(codeRequest);
+                requestQueue.add(codeRequest);
             }
         }).start();
     }
 
+    public void updateCode(String barcode) {
+        RequestQueue requestQueue;
+
+        // Instantiate the cache
+        Cache cache = new DiskBasedCache(getCacheDir(), 1024000 * 1024000); // 1MB cap
+
+        // Set up the network to use HttpURLConnection as the HTTP client.
+        Network network = new BasicNetwork(new HurlStack());
+
+        // Instantiate the RequestQueue with the cache and network.
+        requestQueue = new RequestQueue(cache, network);
+
+        // Start the queue
+        requestQueue.start();
+        String url = "https://controllaccess.boletea.com/api/code/" + barcode;
+        StringRequest codeRequest = new StringRequest(Request.Method.PUT, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d("PUT", error.toString());
+            }
+        });
+        Volley.newRequestQueue(MainActivity.this).add(codeRequest);
+    }
+
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
-        if (result != null){
-            if (result.getContents() == null){
-                Toast.makeText(MainActivity.this,"Lector cancelado",Toast.LENGTH_LONG).show();
-            }else{
-                Toast.makeText(MainActivity.this,"Lector funciona",Toast.LENGTH_LONG).show();
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                Toast.makeText(MainActivity.this, "Lector cancelado", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Lector funciona", Toast.LENGTH_LONG).show();
                 showCode(result.getContents());
                 new Handler().postDelayed(new Runnable() {
                     @Override
@@ -258,9 +310,11 @@ public class MainActivity extends AppCompatActivity {
                         bgLayout.setBackgroundResource(R.color.white);
                         textBarcode.setText("");
                     }
-                },2000);
+                }, 2000);
             }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
-        super.onActivityResult(requestCode, resultCode, data);
+
     }
 }

@@ -6,39 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <RelativeLayout
-        android:id="@+id/bgLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0">
-
-    </RelativeLayout>
-
-    <EditText
-        android:id="@+id/textCode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="38dp"
-        android:layout_marginLeft="38dp"
-        android:layout_marginTop="87dp"
-        android:layout_marginEnd="39dp"
-        android:layout_marginRight="39dp"
-        android:ems="30"
-        android:inputType="textPersonName"
-        android:text=""
-        android:textIsSelectable="true"
-        app:layout_constraintEnd_toEndOf="@id/bgLayout"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="@id/bgLayout"
-        app:layout_constraintTop_toTopOf="@id/bgLayout"
-        tools:ignore="SpeakableTextPresentCheck" />
-
-    <Button
+    <!--<Button
         android:id="@+id/buttonSend"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -52,29 +20,66 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textCode" />
+        app:layout_constraintTop_toBottomOf="@+id/textCode" />-->
+
+    <RelativeLayout
+        android:id="@+id/bgLayout"
+        android:layout_width="379dp"
+        android:layout_height="293dp"
+        android:layout_marginTop="224dp"
+        app:layout_constraintEnd_toEndOf="@+id/textCode"
+        app:layout_constraintStart_toStartOf="@+id/textCode"
+        app:layout_constraintTop_toBottomOf="@+id/textCode">
+
+    </RelativeLayout>
+
+    <EditText
+        android:id="@+id/textCode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="30"
+        android:inputType="textPersonName"
+        android:minHeight="48dp"
+        android:singleLine="true"
+        android:text=""
+        android:textIsSelectable="true"
+        tools:ignore="SpeakableTextPresentCheck"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="99dp" />
 
     <TextView
         android:id="@+id/textBarcode"
         android:layout_width="209dp"
         android:layout_height="87dp"
-        android:layout_marginTop="120dp"
         android:text=""
+        android:textAlignment="center"
         android:textSize="20sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonSend" />
+        app:layout_constraintBottom_toBottomOf="@+id/bgLayout"
+        app:layout_constraintEnd_toEndOf="@+id/bgLayout"
+        app:layout_constraintStart_toStartOf="@+id/bgLayout"
+        app:layout_constraintTop_toTopOf="@+id/bgLayout" />
+
+    <TextView
+        android:id="@+id/textInfo"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/bgLayout"
+        app:layout_constraintEnd_toEndOf="@+id/bgLayout"
+        app:layout_constraintStart_toStartOf="@+id/bgLayout"
+        app:layout_constraintTop_toBottomOf="@+id/textBarcode" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyle"
         android:layout_width="88dp"
         android:layout_height="77dp"
-        app:layout_constraintBottom_toBottomOf="@+id/bgLayout"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/bgLayout"
         app:layout_constraintStart_toStartOf="@+id/bgLayout"
-        app:layout_constraintTop_toBottomOf="@+id/textBarcode" />
+        app:layout_constraintTop_toBottomOf="@+id/bgLayout"
+        app:layout_constraintVertical_bias="0.509" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
