@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
@@ -46,7 +48,7 @@ import java.text.SimpleDateFormat;
 
 
 public class MainActivity extends AppCompatActivity {
-
+    private static ConnectivityManager manager;
     EditText textCode;
     Button buttonSend;
     TextView textBarcode;
@@ -103,12 +105,27 @@ public class MainActivity extends AppCompatActivity {
                 textCode.setText("");
                 Log.d("Message", "Validado");
                 closeTecladoMovil();
-                return true;
-
             default:
                 return false;
         }
     }
+
+    public boolean isOnlineNet() {
+        boolean connected = false;
+        ConnectivityManager connec = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        // Recupera todas las redes (tanto móviles como wifi)
+        NetworkInfo[] redes = connec.getAllNetworkInfo();
+
+        for (int i = 0; i < redes.length; i++) {
+            // Si alguna red tiene conexión, se devuelve true
+            if (redes[i].getState() == NetworkInfo.State.CONNECTED) {
+                connected = true;
+            }
+        }
+        return connected;
+    }
+
 
     private void updateDatabase() {
 
@@ -191,83 +208,107 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCode(String barcode) {
         Log.d("Message", "Entre");
+        if (isOnlineNet()) {
+            new Thread(new Runnable() {
 
-        new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    RequestQueue requestQueue;
 
-            @Override
-            public void run() {
-                RequestQueue requestQueue;
+                    // Instantiate the cache
+                    Cache cache = new DiskBasedCache(getCacheDir(), 1024000 * 1024000); // 1MB cap
 
-                // Instantiate the cache
-                Cache cache = new DiskBasedCache(getCacheDir(), 1024000 * 1024000); // 1MB cap
+                    // Set up the network to use HttpURLConnection as the HTTP client.
+                    Network network = new BasicNetwork(new HurlStack());
 
-                // Set up the network to use HttpURLConnection as the HTTP client.
-                Network network = new BasicNetwork(new HurlStack());
+                    // Instantiate the RequestQueue with the cache and network.
+                    requestQueue = new RequestQueue(cache, network);
 
-                // Instantiate the RequestQueue with the cache and network.
-                requestQueue = new RequestQueue(cache, network);
+                    // Start the queue
+                    requestQueue.start();
 
-                // Start the queue
-                requestQueue.start();
+                    String url = "https://controllaccess.boletea.com/api/code/" + barcode;
+                    StringRequest codeRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+                            try {
+                                JSONObject jsonObject = new JSONObject(response);
+                                Integer status = jsonObject.getInt("status");
 
-                String url = "https://controllaccess.boletea.com/api/code/" + barcode;
-                StringRequest codeRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        try {
-                            JSONObject jsonObject = new JSONObject(response);
-                            Integer status = jsonObject.getInt("status");
+                                String updated_at = jsonObject.getString("updated_at");
+                                //SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
+                                //String info = dateFormat.format(updated_at);
 
-                            String updated_at = jsonObject.getString("updated_at");
-                            //SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
-                            //String info = dateFormat.format(updated_at);
+                                if (jsonObject != null) {
+                                    if (status == 1) {
+                                        bgLayout.setBackgroundResource(R.color.green);
+                                        textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                        textBarcode.setTextSize(60);
+                                        textBarcode.setText("PASE");
+                                        ok.start();
+                                        updateCodeOnline(barcode);
+                                        new Handler().postDelayed(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                bgLayout.setBackgroundResource(android.R.color.transparent);
+                                                textBarcode.setText("");
+                                            }
+                                        }, 2000);
 
-                            if (jsonObject != null) {
-                                if (status == 1) {
-                                    bgLayout.setBackgroundResource(R.color.green);
-                                    textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                    textBarcode.setTextSize(60);
-                                    textBarcode.setText("PASE");
-                                    ok.start();
-                                    updateCode(barcode);
-                                    new Handler().postDelayed(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            bgLayout.setBackgroundResource(android.R.color.transparent);
-                                            textBarcode.setText("");
-                                        }
-                                    }, 2000);
-
-                                } else if (status == 0) {
-                                    bgLayout.setBackgroundResource(R.color.red);
-                                    textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                    textBarcode.setTextSize(60);
-                                    textBarcode.setText("ALTO");
-                                    no.start();
-                                    textInfo.setText("Escaneado: "+updated_at);
+                                    } else if (status == 0) {
+                                        bgLayout.setBackgroundResource(R.color.red);
+                                        textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                        textBarcode.setTextSize(60);
+                                        textBarcode.setText("ALTO");
+                                        no.start();
+                                        textInfo.setText("Escaneado: " + updated_at);
+                                    }
                                 }
+                            } catch (JSONException e) {
+                                Log.d("TAG", e.toString());
+                                bgLayout.setBackgroundResource(android.R.color.holo_orange_dark);
+                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                textBarcode.setTextSize(30);
+                                textBarcode.setText("Evento invalido");
                             }
-                        } catch (JSONException e) {
-                            Log.d("TAG", e.toString());
-                            bgLayout.setBackgroundResource(android.R.color.holo_orange_dark);
-                            textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                            textBarcode.setTextSize(30);
-                            textBarcode.setText("Evento invalido");
                         }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        textBarcode.setText("Codigo no valido");
+                    }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            textBarcode.setText("Codigo no valido");
 
+                        }
+                    });
+                    requestQueue.add(codeRequest);
+                }
+            }).start();
+
+        } else {
+            if (updateCodeOffline(barcode)){
+                bgLayout.setBackgroundResource(R.color.green);
+                textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                textBarcode.setTextSize(60);
+                textBarcode.setText("PASE");
+                ok.start();
+                updateCodeOnline(barcode);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bgLayout.setBackgroundResource(android.R.color.transparent);
+                        textBarcode.setText("");
                     }
-                });
-                requestQueue.add(codeRequest);
+                }, 2000);
+            }else{
+                bgLayout.setBackgroundResource(R.color.red);
+                textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                textBarcode.setTextSize(60);
+                textBarcode.setText("ALTO");
+                no.start();
             }
-        }).start();
+        }
     }
 
-    public void updateCode(String barcode) {
+    public void updateCodeOnline(String barcode) {
         RequestQueue requestQueue;
 
         // Instantiate the cache
@@ -294,6 +335,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         Volley.newRequestQueue(MainActivity.this).add(codeRequest);
+    }
+
+    public boolean updateCodeOffline(String barcode) {
+        DataBaseCodes dataBaseCodes = new DataBaseCodes(MainActivity.this);
+        boolean updated = dataBaseCodes.editCode(barcode);
+        return updated;
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
