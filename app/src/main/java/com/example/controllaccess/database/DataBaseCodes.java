@@ -59,20 +59,40 @@ public class DataBaseCodes extends DataBaseHelper {
         } finally {
             query.close();
         }
+    }
 
+    public boolean validCodeOffline(String code) {
+        Cursor query = null;
+        try {
+            DataBaseHelper dataBaseHelper = new DataBaseHelper(context);
+            SQLiteDatabase dataBase = dataBaseHelper.getWritableDatabase();
+            query = dataBase.rawQuery("SELECT barcode FROM " + DATABASE_TABLE + " WHERE barcode LIKE '" + code + "' AND status LIKE '1'", null);
+
+            if (query.moveToFirst()) {
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+            query.close();
+        }
     }
 
     public boolean editCode(String barcode) {
-        boolean edited;
+        boolean edited = false;
         DataBaseHelper dataBaseHelper = new DataBaseHelper(context);
         SQLiteDatabase dataBase = dataBaseHelper.getWritableDatabase();
         try {
-            dataBase.execSQL("UPDATE " + DATABASE_TABLE + " SET status = '0' WHERE barcode = '" + barcode + "'");
-            edited = true;
+            if (validCodeOffline(barcode)){
+                dataBase.execSQL("UPDATE " + DATABASE_TABLE + " SET status = '0' WHERE barcode LIKE '" + barcode + "'");
+                edited = true;
+            }else{
+                return false;
+            }
         } catch (Exception ex) {
             ex.toString();
             edited = false;
-        }finally {
+        } finally {
             dataBase.close();
         }
 

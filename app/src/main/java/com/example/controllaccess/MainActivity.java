@@ -247,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
                                         textBarcode.setText("PASE");
                                         ok.start();
                                         updateCodeOnline(barcode);
+                                        updateCodeOffline(barcode);
                                         new Handler().postDelayed(new Runnable() {
                                             @Override
                                             public void run() {
@@ -275,6 +276,7 @@ public class MainActivity extends AppCompatActivity {
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
+                            textBarcode.setTextSize(30);
                             textBarcode.setText("Codigo no valido");
 
                         }
