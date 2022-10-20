@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
@@ -45,8 +46,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -113,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public boolean isOnlineNet() {
+    /*public boolean isOnlineNet() {
         boolean connected = false;
         ConnectivityManager connec = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -127,6 +135,44 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return connected;
+    }*/
+    public static boolean isOnlineNet(Context context) {
+
+        ConnectivityManager connectivityManager = (ConnectivityManager)
+                context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+        RunnableFuture<Boolean> futureRun = new FutureTask<Boolean>(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                if ((networkInfo .isAvailable()) && (networkInfo .isConnected())) {
+                    try {
+                        HttpURLConnection urlc = (HttpURLConnection) (new URL("http://www.google.com").openConnection());
+                        urlc.setRequestProperty("User-Agent", "Test");
+                        urlc.setRequestProperty("Connection", "close");
+                        urlc.setConnectTimeout(1500);
+                        urlc.connect();
+                        return (urlc.getResponseCode() == 200);
+                    } catch (IOException e) {
+                        Log.e("TAG", "Error checking internet connection", e);
+                    }
+                } else {
+                    Log.d("TAG", "No network available!");
+                }
+                return false;
+            }
+        });
+
+        new Thread(futureRun).start();
+
+
+        try {
+            return futureRun.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+            return false;
+        }
+
     }
 
 
@@ -211,9 +257,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCode(String barcode) {
         Log.d("Message", "Entre");
-        if (isOnlineNet()) {
+        if (isOnlineNet(MainActivity.this)) {
             new Thread(new Runnable() {
-
                 @Override
                 public void run() {
                     RequestQueue requestQueue;
@@ -279,8 +324,37 @@ public class MainActivity extends AppCompatActivity {
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            textBarcode.setTextSize(30);
-                            textBarcode.setText("Codigo no valido");
+                            if (updateCodeOffline(barcode)) {
+                                bgLayout.setBackgroundResource(R.color.green);
+                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                textBarcode.setTextSize(60);
+                                textBarcode.setText("PASE");
+                                ok.start();
+                                updateCodeOnline(barcode);
+                                updateCodeOffline(barcode);
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        bgLayout.setBackgroundResource(android.R.color.transparent);
+                                        textBarcode.setText("");
+                                    }
+                                }, 2000);
+                            }else{
+                                bgLayout.setBackgroundResource(R.color.red);
+                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
+                                textBarcode.setTextSize(60);
+                                textBarcode.setText("ALTO");
+                                no.start();
+                                textInfo.setText("Escaneado: El boleto ya fue escaneado");
+                                new Handler().postDelayed(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        bgLayout.setBackgroundResource(android.R.color.transparent);
+                                        textBarcode.setText("");
+                                        textInfo.setText("");
+                                    }
+                                }, 2000);
+                            }
 
                         }
                     });

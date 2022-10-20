@@ -26,10 +26,12 @@
         android:id="@+id/bgLayout"
         android:layout_width="379dp"
         android:layout_height="293dp"
-        android:layout_marginTop="224dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/textCode"
         app:layout_constraintStart_toStartOf="@+id/textCode"
-        app:layout_constraintTop_toBottomOf="@+id/textCode">
+        app:layout_constraintTop_toBottomOf="@+id/textCode"
+        app:layout_constraintVertical_bias="0.0">
 
     </RelativeLayout>
 
