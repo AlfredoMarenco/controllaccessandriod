@@ -115,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
                 textCode.setText("");
                 Log.d("Message", "Validado");
                 closeTecladoMovil();
-                textInfo.setText("");
             default:
                 return false;
         }
@@ -152,6 +151,7 @@ public class MainActivity extends AppCompatActivity {
                         urlc.setRequestProperty("Connection", "close");
                         urlc.setConnectTimeout(1500);
                         urlc.connect();
+                        Toast.makeText(context, "Verdadero",Toast.LENGTH_LONG).show();
                         return (urlc.getResponseCode() == 200);
                     } catch (IOException e) {
                         Log.e("TAG", "Error checking internet connection", e);
@@ -256,7 +256,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showCode(String barcode) {
-        Log.d("Message", "Entre");
         if (isOnlineNet(MainActivity.this)) {
             new Thread(new Runnable() {
                 @Override
@@ -324,37 +323,7 @@ public class MainActivity extends AppCompatActivity {
                     }, new Response.ErrorListener() {
                         @Override
                         public void onErrorResponse(VolleyError error) {
-                            if (updateCodeOffline(barcode)) {
-                                bgLayout.setBackgroundResource(R.color.green);
-                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                textBarcode.setTextSize(60);
-                                textBarcode.setText("PASE");
-                                ok.start();
-                                updateCodeOnline(barcode);
-                                updateCodeOffline(barcode);
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        bgLayout.setBackgroundResource(android.R.color.transparent);
-                                        textBarcode.setText("");
-                                    }
-                                }, 2000);
-                            }else{
-                                bgLayout.setBackgroundResource(R.color.red);
-                                textBarcode.setTextColor(Color.rgb(255, 255, 255));
-                                textBarcode.setTextSize(60);
-                                textBarcode.setText("ALTO");
-                                no.start();
-                                textInfo.setText("Escaneado: El boleto ya fue escaneado");
-                                new Handler().postDelayed(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        bgLayout.setBackgroundResource(android.R.color.transparent);
-                                        textBarcode.setText("");
-                                        textInfo.setText("");
-                                    }
-                                }, 2000);
-                            }
+                            Toast.makeText(MainActivity.this,"Server no responde",Toast.LENGTH_LONG).show();
 
                         }
                     });
@@ -375,6 +344,7 @@ public class MainActivity extends AppCompatActivity {
                     public void run() {
                         bgLayout.setBackgroundResource(android.R.color.transparent);
                         textBarcode.setText("");
+                        textInfo.setText("");
                     }
                 }, 2000);
             }else{
@@ -382,7 +352,16 @@ public class MainActivity extends AppCompatActivity {
                 textBarcode.setTextColor(Color.rgb(255, 255, 255));
                 textBarcode.setTextSize(60);
                 textBarcode.setText("ALTO");
+                textInfo.setText("Info desde el else de la conexion");
                 no.start();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        bgLayout.setBackgroundResource(android.R.color.transparent);
+                        textBarcode.setText("");
+                        textInfo.setText("");
+                    }
+                }, 2000);
             }
         }
     }
