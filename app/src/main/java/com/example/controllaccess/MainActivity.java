@@ -11,6 +11,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.InputType;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -44,6 +45,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 
@@ -105,6 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 textCode.setText("");
                 Log.d("Message", "Validado");
                 closeTecladoMovil();
+                textInfo.setText("");
             default:
                 return false;
         }
@@ -236,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
                                 Integer status = jsonObject.getInt("status");
 
                                 String updated_at = jsonObject.getString("updated_at");
-                                //SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
+
                                 //String info = dateFormat.format(updated_at);
 
                                 if (jsonObject != null) {
